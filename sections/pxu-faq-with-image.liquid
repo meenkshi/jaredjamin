@@ -1,0 +1,483 @@
+{%- comment -%}
+  🧰 Faq with image section
+{%- endcomment -%}
+
+{%- liquid
+  assign section_heading = section.settings.section_heading | strip
+  assign text_color = section.settings.text_color
+  assign desktop_image = section.settings.image
+  assign mobile_image = section.settings.mobile_image
+  assign image_class = 'pxu-faq-with-image__image pxu-faq-with-image__image--' | append: section.settings.image_height
+  assign desktop_layout_variant_class = ''
+  if section.settings.desktop_image_layout == 'collage' and section.settings.desktop_image_placement == 'row-reverse'
+    assign desktop_layout_variant_class = 'pxu-faq-with-image--collage-reversed'
+  endif
+  assign mobile_layout_variant_class = ''
+  if section.settings.desktop_image_layout == 'collage' and section.settings.mobile_image_placement == 'column-reverse'
+    assign mobile_layout_variant_class = 'pxu-faq-with-image--mobile-collage-reversed'
+  endif
+  assign loading = 'lazy'
+  assign fetch_priority = 'auto'
+  if section.index <= 3
+    assign loading = 'eager'
+    assign fetch_priority = 'high'
+  endif
+  assign image_height_mobile_small = 300
+  assign image_height_desktop_small = 500
+  assign image_height_mobile_medium = 450
+  assign image_height_desktop_medium = 650
+  assign image_height_mobile_large = 600
+  assign image_height_desktop_large = 800
+-%}
+
+<section
+  id="{{ section.id }}"
+  class="
+    pxu-section
+    pxu-faq-with-image
+    pxu-faq-with-image--{{ section.settings.desktop_image_layout }}
+    {{ desktop_layout_variant_class }}
+    {{ mobile_layout_variant_class }}
+  "
+  style="
+    --pxu-section-heading-size: {{ section.settings.section_heading_size }}px;
+    --pxu-section-heading-size-mobile: {{ section.settings.section_heading_size_mobile }}px;
+    --pxu-section-text-color: {{ text_color }};
+    --pxu-section-background-color: {{ section.settings.background_color }};
+    --pxu-section-placeholder-fill-color: {{ text_color | color_modify: 'alpha', 0.35 }};
+    --pxu-section-placeholder-background-color: {{ text_color | color_modify: 'alpha', 0.15 }};
+    --pxu-section-padding-top: {{ section.settings.padding_top }}px;
+    --pxu-section-padding-bottom: {{ section.settings.padding_bottom }}px;
+    --pxu-section-margin-top: {{ section.settings.margin_top }}px;
+    --pxu-section-margin-bottom: {{ section.settings.margin_bottom }}px;
+    --pxu-section-desktop-image-placement: {{ section.settings.desktop_image_placement }};
+    --pxu-section-mobile-image-placement: {{ section.settings.mobile_image_placement }};
+    --pxu-text-size: {{ section.settings.block_text_size }}px;
+    --pxu-text-size-mobile: {{ section.settings.block_text_size_mobile }}px;
+    --pxu-section-image-height-mobile-small: {{ image_height_mobile_small }}px;
+    --pxu-section-image-height-desktop-small: {{ image_height_desktop_small }}px;
+    --pxu-section-image-height-mobile-medium: {{ image_height_mobile_medium }}px;
+    --pxu-section-image-height-desktop-medium: {{ image_height_desktop_medium }}px;
+    --pxu-section-image-height-mobile-large: {{ image_height_mobile_large }}px;
+    --pxu-section-image-height-desktop-large: {{ image_height_desktop_large }}px;
+  "
+  data-pxu-faq-with-image
+>
+  <script
+    type="application/json"
+    data-component-data
+  >
+    {
+      "id": "{{ section.id }}",
+      "handle": "pxu-faq-with-image",
+      "className": "FaqWithImageSection",
+      "name": "Faq with image",
+      "version": "1.0.1",
+      "scriptsUrl": "{{ 'scripts.js' | asset_url | replace: '/assets/', '/compiled_assets/' }}"
+    }
+  </script>
+
+  <div class="pxu-section__container pxu-faq-with-image__container">
+    <div class="pxu-faq-with-image__inner">
+      <div class="pxu-faq-with-image__image-container">
+        {%- if desktop_image != blank or mobile_image != blank -%}
+          <picture>
+            {%- if mobile_image != blank -%}
+              <source media="(max-width: 719px)" srcset="{{ mobile_image | img_url: 'master' }}">
+            {%- endif -%}
+            {%- if desktop_image != blank -%}
+              <source media="(min-width: 720px)" srcset="{{ desktop_image | img_url: 'master' }}">
+              <img
+                src="{{ desktop_image | img_url: 'master' }}"
+                alt="{{ desktop_image.alt | escape }}"
+                class="{{ image_class }}"
+                loading="{{ loading }}"
+                fetchpriority="{{ fetch_priority }}"
+              >
+            {%- elsif mobile_image != blank -%}
+              <img
+                src="{{ mobile_image | img_url: 'master' }}"
+                alt="{{ mobile_image.alt | escape }}"
+                class="{{ image_class }}"
+                loading="{{ loading }}"
+                fetchpriority="{{ fetch_priority }}"
+              >
+            {%- endif -%}
+          </picture>
+        {%- else -%}
+          {{- 'image' | placeholder_svg_tag: 'pxu-placeholder' -}}
+        {%- endif -%}
+      </div>
+
+      <div class="pxu-faq-with-image__content-container">
+        {%- if section_heading != blank -%}
+          <h2 class="pxu-faq-with-image__section-heading pxu-heading">
+            {{- section_heading -}}
+          </h2>
+        {%- endif -%}
+
+        {% for block in section.blocks %}
+          {% if block.type == 'question' %}
+            {% liquid
+              assign question = block.settings.question | strip_html
+              assign answer = block.settings.answer | strip
+            %}
+            {% if question != blank and answer != blank %}
+              <div
+                id="{{ block.id }}"
+                class="pxu-details"
+                {{ block.shopify_attributes }}
+              >
+                <details
+                  class="pxu-details__item-term"
+                  aria-details="answer-{{ block.id }}"
+                  data-pxu-faq-item-term
+                >
+                  <summary class="pxu-details__question">
+                    <span class="pxu-details__question-text">{{ question }}</span>
+                    <svg
+                      class="pxu-details__icon"
+                      focusable="false"
+                      role="presentation"
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="14"
+                      height="8"
+                      viewBox="0 0 14 8"
+                      fill="none"
+                    >
+                      <path class="pxu-details__icon-left" d="M7 6.75L12.5 1.25" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"></path>
+                      <path class="pxu-details__icon-right" d="M7 6.75L1.5 1.25" stroke="currentColor" stroke-width="1.75" stroke-linecap="square"></path>
+                    </svg>
+                  </summary>
+                </details>
+                <div
+                  id="answer-{{ block.id }}"
+                  class="pxu-details__answer"
+                  data-pxu-faq-answer
+                >
+                  <div class="pxu-details__answer-content pxu-rte">
+                    {{ answer }}
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style type="text/css">
+.pxu-section{--pxu-current-bp:"xxs"}@media only screen and (min-width:480px){.pxu-section{--pxu-current-bp:"xs"}}@media only screen and (min-width:720px){.pxu-section{--pxu-current-bp:"small"}}@media only screen and (min-width:860px){.pxu-section{--pxu-current-bp:"medium"}}@media only screen and (min-width:1024px){.pxu-section{--pxu-current-bp:"large"}}.pxu-faq-with-image{background-color:var(--pxu-section-background-color);color:var(--pxu-section-text-color);margin-bottom:calc(var(--pxu-section-margin-bottom, 0)*.75);margin-top:calc(var(--pxu-section-margin-top, 0)*.75);padding:calc(var(--pxu-section-padding-top, 0)*.75) var(--pxu-space-4) calc(var(--pxu-section-padding-bottom, 0)*.75)}@media only screen and (min-width:480px){.pxu-faq-with-image{margin-bottom:var(--pxu-section-margin-bottom,0);margin-top:var(--pxu-section-margin-top,0);padding:var(--pxu-section-padding-top,0) var(--pxu-space-6) var(--pxu-section-padding-bottom,0)}}@media only screen and (min-width:720px){.pxu-faq-with-image--collage-reversed.pxu-faq-with-image--collage .pxu-faq-with-image__content-container{margin-left:0}.pxu-faq-with-image--collage-reversed.pxu-faq-with-image--collage .pxu-faq-with-image__image-container{margin-left:-112px}}@media only screen and (min-width:720px){@media only screen and (max-width:859px){@media (max-color:2147477350) and (max-color:2147477350){.pxu-faq-with-image--collage-reversed.pxu-faq-with-image--collage .pxu-faq-with-image__image-container{margin-left:-56px}}}@media not screen and (max-width:859px){@media (max-color:2147477350) and (color:2147477350){.pxu-faq-with-image--collage-reversed.pxu-faq-with-image--collage .pxu-faq-with-image__image-container{margin-left:-56px}}}}@media not screen and (min-width:720px){@media only screen and (max-width:859px){@media (color:2147477350) and (max-color:2147477350){.pxu-faq-with-image--collage-reversed.pxu-faq-with-image--collage .pxu-faq-with-image__image-container{margin-left:-56px}}}@media not screen and (max-width:859px){@media (color:2147477350) and (color:2147477350){.pxu-faq-with-image--collage-reversed.pxu-faq-with-image--collage .pxu-faq-with-image__image-container{margin-left:-56px}}}}.pxu-faq-with-image--collage{background-color:transparent;padding-bottom:0;padding-top:0}.pxu-faq-with-image--padded .pxu-faq-with-image__inner{gap:var(--pxu-space-6)}@media only screen and (min-width:720px){.pxu-faq-with-image--padded .pxu-faq-with-image__content-container{padding-left:var(--pxu-space-8);padding-right:var(--pxu-space-8)}}@media only screen and (max-width:719px){.pxu-faq-with-image--padded .pxu-faq-with-image__inner{row-gap:var(--pxu-space-10)}}.pxu-faq-with-image__inner{display:flex;flex-direction:var(--pxu-section-mobile-image-placement)}@media only screen and (min-width:720px){.pxu-faq-with-image__inner{flex-direction:var(--pxu-section-desktop-image-placement)}.pxu-faq-with-image--collage .pxu-faq-with-image__inner{display:flex}}.pxu-faq-with-image__image-container{width:100%}@media only screen and (min-width:720px){.pxu-faq-with-image__image-container{width:50%}.pxu-faq-with-image--collage .pxu-faq-with-image__image-container{width:calc(50% + var(--pxu-space-14));z-index:1}}@media only screen and (max-width:719px){.pxu-faq-with-image--mobile-collage-reversed .pxu-faq-with-image__image-container{margin-top:-64px;z-index:1}}.pxu-faq-with-image__image{display:block;height:auto;-o-object-fit:cover;object-fit:cover;width:100%}.pxu-faq-with-image__image--adapt{height:auto}.pxu-faq-with-image__image--small{height:var(--pxu-section-image-height-mobile-small)}@media only screen and (min-width:720px){.pxu-faq-with-image__image--small{height:var(--pxu-section-image-height-desktop-small)}}.pxu-faq-with-image__image--medium{height:var(--pxu-section-image-height-mobile-medium)}@media only screen and (min-width:720px){.pxu-faq-with-image__image--medium{height:var(--pxu-section-image-height-desktop-medium)}}.pxu-faq-with-image__image--large{height:var(--pxu-section-image-height-mobile-large)}@media only screen and (min-width:720px){.pxu-faq-with-image__image--large{height:var(--pxu-section-image-height-desktop-large)}.pxu-faq-with-image--collage .pxu-faq-with-image__image{-o-object-fit:cover;object-fit:cover;-o-object-position:center;object-position:center;width:100%}}.pxu-faq-with-image__content-container{padding:var(--pxu-space-8) var(--pxu-space-4);width:100%}@media only screen and (min-width:720px){.pxu-faq-with-image__content-container{padding:var(--pxu-space-14);padding-top:0;width:50%}}@media only screen and (max-width:719px){.pxu-faq-with-image--padded .pxu-faq-with-image__content-container{padding:0}.pxu-faq-with-image--collage.pxu-faq-with-image--mobile-collage-reversed .pxu-faq-with-image__content-container{margin:0 auto}}@media only screen and (min-width:720px){.pxu-faq-with-image--collage .pxu-faq-with-image__content-container{background-color:var(--pxu-section-background-color);margin:var(--pxu-space-16) var(--pxu-space-0) var(--pxu-space-16) -112px;padding:var(--pxu-section-padding-top) var(--pxu-space-14) var(--pxu-section-padding-bottom);width:calc(50% + 56px);z-index:2}}@media only screen and (min-width:720px){@media only screen and (max-width:859px){@media (max-color:2147477350) and (max-color:2147477350){.pxu-faq-with-image--collage .pxu-faq-with-image__content-container{margin-left:-56px;padding-left:var(--pxu-space-10);padding-right:var(--pxu-space-10)}}}@media not screen and (max-width:859px){@media (max-color:2147477350) and (color:2147477350){.pxu-faq-with-image--collage .pxu-faq-with-image__content-container{margin-left:-56px;padding-left:var(--pxu-space-10);padding-right:var(--pxu-space-10)}}}}@media not screen and (min-width:720px){@media only screen and (max-width:859px){@media (color:2147477350) and (max-color:2147477350){.pxu-faq-with-image--collage .pxu-faq-with-image__content-container{margin-left:-56px;padding-left:var(--pxu-space-10);padding-right:var(--pxu-space-10)}}}@media not screen and (max-width:859px){@media (color:2147477350) and (color:2147477350){.pxu-faq-with-image--collage .pxu-faq-with-image__content-container{margin-left:-56px;padding-left:var(--pxu-space-10);padding-right:var(--pxu-space-10)}}}}@media only screen and (max-width:719px){.pxu-faq-with-image--collage .pxu-faq-with-image__content-container{background-color:var(--pxu-section-background-color);margin:-64px auto 0;padding-bottom:var(--pxu-section-padding-bottom);padding-top:var(--pxu-section-padding-top);position:relative;width:calc(100% - 32px);z-index:2}}.pxu-faq-with-image__section-heading.pxu-heading{font-size:var(--pxu-section-heading-size-mobile);margin-bottom:var(--pxu-space-3);text-align:center}@media only screen and (min-width:720px){.pxu-faq-with-image__section-heading.pxu-heading{font-size:var(--pxu-section-heading-size);margin-bottom:var(--pxu-space-5);text-align:left}}</style>
+{% javascript %}
+const { Section } = window.PxuThemeSections;
+const { debounce } = window.PxuUtils;
+
+class FaqWithImageSection extends Section {
+  constructor($root) {
+    super($root);
+    this.$root = $root;
+    this.id = $root.id;
+    this.data = this.loadData();
+    this.$answers = this.queryAll('[data-pxu-faq-answer]');
+
+    this.onMount();
+  }
+
+  onMount() {
+    this.initEventListeners();
+    this.updateItemHeights();
+  }
+
+  onUnmount() {
+    this.events.unregisterAll();
+  }
+
+  initEventListeners() {
+    this.events.register(window, 'resize', debounce(
+      () => this.updateItemHeights(), 200)
+    );
+  }
+
+  updateItemHeights() {
+    this.$answers.forEach(($answer) => {
+      const openHeight = $answer.scrollHeight;
+      $answer.style.setProperty('--open-height', `${openHeight}px`);
+    });
+  }
+
+  onBlockSelect(event) {
+    const { blockId } = event.detail;
+    const $block = document.getElementById(blockId);
+    const $itemTerm = $block.querySelector('[data-pxu-faq-item-term]');
+    if (!$itemTerm) return;
+    $itemTerm.open = true;
+  }
+
+  onBlockDeselect(event) {
+    const { blockId } = event.detail;
+    const $block = document.getElementById(blockId);
+    const $itemTerm = $block.querySelector('[data-pxu-faq-item-term]');
+    if (!$itemTerm) return;
+    $itemTerm.open = false;
+  }
+}
+
+document.querySelectorAll(`[data-pxu-faq-with-image]`).forEach(($section) => {
+  Section.init($section, FaqWithImageSection);
+});
+
+// Export for theme editor instance management.
+if (Shopify.designMode) {
+  window.PxuThemeSections.FaqWithImageSection = FaqWithImageSection;
+}{% endjavascript %}
+{% schema %}
+{
+  "name": "t:pxu_sections.sections.faq_with_image.name",
+  "class": "pxu-faq-with-image-section",
+  "settings": [
+    {
+      "type": "inline_richtext",
+      "id": "section_heading",
+      "label": "t:pxu_sections.common.heading.section_heading",
+      "default": "t:pxu_sections.sections.faq_with_image.section_heading"
+    },
+    {
+      "type": "range",
+      "id": "section_heading_size",
+      "min": 16,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "t:pxu_sections.common.heading.heading_size",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "section_heading_size_mobile",
+      "min": 16,
+      "max": 60,
+      "step": 1,
+      "unit": "px",
+      "label": "t:pxu_sections.common.heading.heading_size_mobile",
+      "default": 30
+    },
+    {
+      "type": "image_picker",
+      "id": "image",
+      "label": "t:pxu_sections.common.image.image"
+    },
+    {
+      "type": "select",
+      "id": "image_height",
+      "label": "t:pxu_sections.common.image.image_height",
+      "options": [
+        {
+          "value": "adapt",
+          "label": "t:pxu_sections.common.image.adapt"
+        },
+        {
+          "value": "small",
+          "label": "t:pxu_sections.common.image.small"
+        },
+        {
+          "value": "medium",
+          "label": "t:pxu_sections.common.image.medium"
+        },
+        {
+          "value": "large",
+          "label": "t:pxu_sections.common.image.large"
+        }
+      ],
+      "default": "adapt"
+    },
+    {
+      "type": "select",
+      "id": "desktop_image_placement",
+      "label": "t:pxu_sections.common.image.desktop_image_placement",
+      "options": [
+        {
+          "value": "row",
+          "label": "t:pxu_sections.common.image.image_first"
+        },
+        {
+          "value": "row-reverse",
+          "label": "t:pxu_sections.common.image.image_second"
+        }
+      ],
+      "default": "row"
+    },
+    {
+      "type": "select",
+      "id": "desktop_image_layout",
+      "label": "t:pxu_sections.sections.faq_with_image.layout.label",
+      "options": [
+        {
+          "value": "padded",
+          "label": "t:pxu_sections.sections.faq_with_image.layout.padded"
+        },
+        {
+          "value": "collage",
+          "label": "t:pxu_sections.sections.faq_with_image.layout.collage"
+        }
+      ],
+      "default": "padded"
+    },
+    {
+      "type": "header",
+      "content": "t:pxu_sections.common.typography.block_typography"
+    },
+    {
+      "type": "range",
+      "id": "block_text_size",
+      "min": 12,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "t:pxu_sections.common.text.text_size",
+      "default": 16
+    },
+    {
+      "type": "range",
+      "id": "block_text_size_mobile",
+      "min": 12,
+      "max": 32,
+      "step": 1,
+      "unit": "px",
+      "label": "t:pxu_sections.common.text.text_size_mobile",
+      "default": 16
+    },
+    {
+      "type": "header",
+      "content": "t:pxu_sections.common.layout.mobile_layout"
+    },
+    {
+      "type": "image_picker",
+      "id": "mobile_image",
+      "label": "t:pxu_sections.common.image.mobile_image"
+    },
+    {
+      "type": "select",
+      "id": "mobile_image_placement",
+      "label": "t:pxu_sections.common.image.mobile_image_placement",
+      "options": [
+        {
+          "value": "column",
+          "label": "t:pxu_sections.common.image.image_first"
+        },
+        {
+          "value": "column-reverse",
+          "label": "t:pxu_sections.common.image.image_second"
+        }
+      ],
+      "default": "column"
+    },
+    {
+      "type": "header",
+      "content": "t:pxu_sections.common.color.color"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:pxu_sections.common.color.text_color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:pxu_sections.common.color.background_color",
+      "default": "#F8F8F8"
+    },
+    {
+      "type": "header",
+      "content": "t:pxu_sections.common.padding.header"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "t:pxu_sections.common.padding.top",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "t:pxu_sections.common.padding.bottom",
+      "default": 64
+    },
+    {
+      "type": "header",
+      "content": "t:pxu_sections.common.margin.header"
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "t:pxu_sections.common.margin.top",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "t:pxu_sections.common.margin.bottom",
+      "default": 64
+    }
+  ],
+  "blocks": [
+    {
+      "type": "question",
+      "name": "t:pxu_sections.sections.faq_with_image.block_question",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "t:pxu_sections.sections.faq_with_image.block_question",
+          "default": "t:pxu_sections.sections.faq_with_image.block_question"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "t:pxu_sections.sections.faq_with_image.block_answer",
+          "default": "t:pxu_sections.sections.faq_with_image.block_answer_default"
+        }
+      ]
+    }
+  ],
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer"
+    ]
+  },
+  "presets": [
+    {
+      "name": "🧰 FAQ with image",
+      "blocks": [
+        {
+          "type": "question"
+        },
+        {
+          "type": "question"
+        },
+        {
+          "type": "question"
+        }
+      ]
+    }
+  ]
+}{% endschema %}

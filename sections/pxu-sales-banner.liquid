@@ -1,0 +1,492 @@
+{%- comment -%}
+  🧰 Sales banner section
+{%- endcomment -%}
+
+{%- liquid
+  assign text_color = section.settings.text_color
+  assign section_height = section.settings.section_height
+  assign background_image = section.settings.background_image
+
+  assign background = section.settings.background_color
+  if section.settings.background_gradient != blank
+    assign background = section.settings.background_gradient
+  endif
+
+  assign text_color = section.settings.text_color
+  assign image_overlay_color = section.settings.image_overlay_color
+  assign image_overlay_opacity = section.settings.image_overlay_opacity | divided_by: 100.0
+
+  assign image_height_mobile_small = 300
+  assign image_height_desktop_small = 350
+  assign image_height_mobile_medium = 400
+  assign image_height_desktop_medium = 500
+  assign image_height_mobile_large = 550
+  assign image_height_desktop_large = 650
+
+  assign loading = "lazy"
+  assign fetch_priority = "low"
+  if section.index <= 3
+    assign loading = "eager"
+    assign fetch_priority = "high"
+  endif
+-%}
+
+<section
+  id="{{ section.id }}"
+  class="
+    pxu-section
+    pxu-sales-banner
+    pxu-sales-banner--{{ section_height }}
+  "
+  style="
+    --pxu-section-text-color: {{ text_color }};
+    --pxu-section-background: {{ background }};
+    --pxu-section-margin-top: {{ section.settings.margin_top }}px;
+    --pxu-section-margin-bottom: {{ section.settings.margin_bottom }}px;
+    --pxu-section-image-aspect-ratio: {{ background_image.aspect_ratio | default: 'auto' }};
+    --pxu-section-image-overlay: {{ image_overlay_color }};
+    --pxu-section-image-overlay-opacity: {{ image_overlay_opacity }};
+
+    --pxu-section-image-height-mobile-small: {{ image_height_mobile_small }}px;
+    --pxu-section-image-height-desktop-small: {{ image_height_desktop_small }}px;
+    --pxu-section-image-height-mobile-medium: {{ image_height_mobile_medium }}px;
+    --pxu-section-image-height-desktop-medium: {{ image_height_desktop_medium }}px;
+    --pxu-section-image-height-mobile-large: {{ image_height_mobile_large }}px;
+    --pxu-section-image-height-desktop-large: {{ image_height_desktop_large }}px;
+  "
+>
+  <script
+    type="application/json"
+    data-component-data
+  >
+    {
+      "id": "{{ section.id }}",
+      "handle": "pxu-sales-banner",
+      "className": "SalesBannerSection",
+      "name": "Sales banner",
+      "version": "1.0.1"
+    }
+  </script>
+  {%- if background_image -%}
+    <div class="pxu-sales-banner__image-wrapper">
+      {{ background_image |
+        image_url: width: 1600 |
+        image_tag:
+          class: "pxu-sales-banner__image",
+          widths: '300, 480, 800, 1200, 1400, 1600',
+          sizes: '100vw',
+          loading: loading,
+          fetchpriority: fetch_priority }}
+    </div>
+   {%- endif -%}
+  <div class="pxu-section__container pxu-sales-banner__container">
+    <div class="pxu-sales-banner__inner">
+      {% for block in section.blocks %}
+        {% case block.type %}
+          {% when 'highlighted_text' %}
+            {% assign highlight_color = block.settings.highlight_color %}
+            {% capture underline_svg %}
+              <svg class="pxu-highlight__svg" xmlns="http://www.w3.org/2000/svg" width="346" height="20" viewBox="0 0 346 20" fill="none" preserveAspectRatio="none">
+                <path d="M197.275 0.0690825C210.132 0.0690825 223.001 -0.111185 235.847 0.110681C254.639 0.443479 273.431 0.734712 292.212 1.66377C306.223 2.3571 320.269 2.98108 334.126 5.89306C337.111 6.51706 340.049 7.41839 342.737 9.09624C344.117 9.95597 346.103 10.5522 345.996 12.8125C345.889 15.3362 343.712 15.5442 342.142 16.1543C338.217 17.6797 334.114 18.0679 330.01 18.2898C321.364 18.7474 312.741 17.6519 304.106 17.4023C297.421 17.2082 290.749 16.3762 284.052 16.2098C262.239 15.6829 240.438 14.8786 218.612 14.4349C178.197 13.6029 137.793 13.6445 97.3898 13.9634C73.0905 14.1437 48.8389 15.877 24.6586 18.7613C18.0099 19.5516 11.3137 20.1479 4.60551 19.9676C2.64302 19.9122 0.371292 20.1479 0.0382634 17.0834C-0.318553 13.8248 1.8818 12.757 4.07027 12.2162C12.6339 10.1085 21.3283 8.86052 29.999 7.50159C56.4748 3.34162 83.0814 1.89951 109.771 1.27551C138.935 0.582182 168.099 -0.0556897 197.263 0.0968428L197.275 0.0690825Z" fill="{{ highlight_color }}"/>
+              </svg>
+            {% endcapture %}
+            {% liquid
+              assign text = block.settings.heading | strip
+              assign font = block.settings.font
+
+              assign solid_highlight_phrases = block.settings.solid_highlight_phrases | newline_to_br | strip_newlines | split: "<br />"
+              assign underline_highlight_phrases = block.settings.underline_highlight_phrases | newline_to_br | strip_newlines | split: "<br />"
+
+              for phrase in solid_highlight_phrases
+                assign wrapped_phrase = "<span class='pxu-highlight pxu-highlight--solid'><span class='pxu-highlight__text'>" | append: phrase | append: "</span></span>"
+                assign text = text | replace: phrase, wrapped_phrase
+              endfor
+
+              for phrase in underline_highlight_phrases
+                assign wrapped_phrase = "<span class='pxu-highlight pxu-highlight--underline'><span class='pxu-highlight__text'>" | append: phrase | append: "</span>" | append: underline_svg | append: "</span>"
+                assign text = text | replace: phrase, wrapped_phrase
+              endfor
+            %}
+            <style type="text/css">{{ font | font_face }}</style>
+            <div
+              class="pxu-sales-banner__highlight pxu-rte"
+              style='
+                  --pxu-block-highlight-font: {{ font.family }}, {{ font.fallback_families }};
+                  --pxu-block-highlight-font-weight: {{ font.weight }};
+                  --pxu-block-text-size: {{ block.settings.text_size }}px;
+                  --pxu-block-text-size-mobile: {{ block.settings.text_size_mobile }}px;
+                  --pxu-block-line-height: {{ block.settings.text_line_height }};
+                  --pxu-highlight-color: {{ block.settings.highlight_color }};
+                  --pxu-solid-highlight-offset: {{ block.settings.solid_highlight_offset }}%;
+                  --pxu-underline-highlight-offset: {{ block.settings.underline_highlight_offset }}%;
+                '
+            >
+              {{ text }}
+            </div>
+          {% when 'content' %}
+              {% liquid
+                assign heading = block.settings.heading | strip
+                assign text = block.settings.text | strip
+                assign button_label = block.settings.button_label | escape
+                assign button_url = block.settings.button_url
+                assign button_style = block.settings.button_style
+                assign button_text_color = block.settings.button_text_color
+                assign button_background_color = block.settings.button_background_color
+                assign button_brightness = button_background_color | color_brightness
+                assign button_brightness_mod = 'light-on-dark'
+                if button_brightness > 127.5
+                  assign button_brightness_mod = 'dark-on-light'
+                endif
+              %}
+              <div
+                class="pxu-sales-banner__content"
+                style="
+                  --pxu-block-heading-size: {{ block.settings.heading_size }}px;
+                  --pxu-block-heading-size-mobile: {{ block.settings.heading_size_mobile }}px;
+                  --pxu-block-text-size: {{ block.settings.text_size }}px;
+                  --pxu-block-text-size-mobile: {{ block.settings.text_size_mobile }}px;
+                "
+              >
+                {%- if heading != blank -%}
+                  <h2 class="pxu-sales-banner__heading pxu-heading">
+                    {{- heading -}}
+                  </h2>
+                {%- endif -%}
+                {%- if text != blank -%}
+                  <div class="pxu-sales-banner__text pxu-rte">
+                    {{- text -}}
+                  </div>
+                {%- endif -%}
+                {%- if button_label != blank -%}
+                  <a
+                    class="
+                      pxu-sales-banner__button
+                      pxu-btn
+                      pxu-btn--{{ button_style }}
+                      pxu-btn--{{ button_brightness_mod }}
+                    "
+                    style="
+                      --pxu-btn-background-color: {{ button_background_color }};
+                      --pxu-btn-text-color: {{ button_text_color }};
+                    "
+                    {% if button_url != blank %}
+                      href="{{ button_url }}"
+                    {% endif %}
+                  >
+                    {{- button_label -}}
+                  </a>
+                {%- endif -%}
+              </div>
+        {% endcase %}
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<style type="text/css">
+.pxu-section{--pxu-current-bp:"xxs"}@media only screen and (min-width:480px){.pxu-section{--pxu-current-bp:"xs"}}@media only screen and (min-width:720px){.pxu-section{--pxu-current-bp:"small"}}@media only screen and (min-width:860px){.pxu-section{--pxu-current-bp:"medium"}}@media only screen and (min-width:1024px){.pxu-section{--pxu-current-bp:"large"}}.pxu-sales-banner{align-items:center;background:var(--pxu-section-background);color:var(--pxu-section-text-color);display:flex;flex-wrap:nowrap;margin-bottom:calc(var(--pxu-section-margin-bottom, 0)*.75);margin-top:calc(var(--pxu-section-margin-top, 0)*.75);padding-left:var(--pxu-space-4);padding-right:var(--pxu-space-4);text-align:center}@media only screen and (min-width:480px){.pxu-sales-banner{margin-bottom:var(--pxu-section-margin-bottom,0);margin-top:var(--pxu-section-margin-top,0);padding-left:var(--pxu-space-6);padding-right:var(--pxu-space-6)}}.pxu-sales-banner__image-wrapper{inset:0;position:absolute}.pxu-sales-banner__image-wrapper:after{background:var(--pxu-section-image-overlay);content:"";display:block;inset:0;opacity:var(--pxu-section-image-overlay-opacity);position:absolute;z-index:1}.pxu-sales-banner__image{height:100%;-o-object-fit:cover;object-fit:cover;width:100%}.pxu-sales-banner__container{padding-bottom:var(--pxu-space-16);padding-top:var(--pxu-space-16);position:relative;z-index:2}.pxu-sales-banner__inner{display:flex;flex-direction:column;margin:0 auto;max-width:1400px;row-gap:var(--pxu-space-8)}.pxu-sales-banner__highlight{font-family:var(--pxu-block-highlight-font,inherit);font-size:var(--pxu-block-text-size-mobile);font-weight:var(--pxu-block-highlight-font-weight,inherit)}.pxu-sales-banner__highlight a{text-decoration:none}@media only screen and (min-width:720px){.pxu-sales-banner__highlight{font-size:var(--pxu-block-text-size);text-align:center}}.pxu-sales-banner__highlight:last-child{margin-bottom:0}@media only screen and (max-width:719px){.pxu-sales-banner__highlight:last-child{margin-top:var(--pxu-space-3)}}.pxu-sales-banner__highlight *{line-height:var(--pxu-block-line-height)!important}.pxu-sales-banner__heading{font-size:var(--pxu-block-heading-size-mobile);margin-bottom:0}@media only screen and (min-width:720px){.pxu-sales-banner__heading{font-size:var(--pxu-block-heading-size)}}.pxu-sales-banner__text{font-size:var(--pxu-block-text-size-mobile);margin-top:var(--pxu-space-2)}@media only screen and (min-width:720px){.pxu-sales-banner__text{font-size:var(--pxu-block-text-size);margin-top:var(--pxu-space-3)}}.pxu-sales-banner__button{margin-top:var(--pxu-space-6)}.pxu-sales-banner__button:first-child,.pxu-sales-banner__text:first-child{margin-top:0}@media only screen and (min-width:860px){.pxu-sales-banner:has(.pxu-sales-banner__highlight):has(.pxu-sales-banner__content) .pxu-sales-banner__inner{align-items:center;-moz-column-gap:var(--pxu-space-24);column-gap:var(--pxu-space-24);display:grid;grid-template-columns:repeat(2,1fr)}}@media only screen and (min-width:860px){.pxu-sales-banner:has(.pxu-sales-banner__highlight):has(.pxu-sales-banner__content) .pxu-sales-banner__highlight{text-align:right}.pxu-sales-banner:has(.pxu-sales-banner__highlight):has(.pxu-sales-banner__content) .pxu-sales-banner__content,.pxu-sales-banner:has(.pxu-sales-banner__highlight):has(.pxu-sales-banner__content) .pxu-sales-banner__highlight:last-child{text-align:left}}.pxu-sales-banner--adapt{aspect-ratio:auto}@media only screen and (min-width:860px){.pxu-sales-banner--adapt{aspect-ratio:var(--pxu-section-image-aspect-ratio)}}.pxu-sales-banner--small{min-height:var(--pxu-section-image-height-mobile-small)}@media only screen and (min-width:720px){.pxu-sales-banner--small{min-height:var(--pxu-section-image-height-desktop-small)}}.pxu-sales-banner--medium{min-height:var(--pxu-section-image-height-mobile-medium)}@media only screen and (min-width:720px){.pxu-sales-banner--medium{min-height:var(--pxu-section-image-height-desktop-medium)}}.pxu-sales-banner--large{min-height:var(--pxu-section-image-height-mobile-large)}@media only screen and (min-width:720px){.pxu-sales-banner--large{min-height:var(--pxu-section-image-height-desktop-large)}}</style>
+{% schema %}
+{
+  "name": "t:pxu_sections.sections.sales_banner.name",
+  "class": "pxu-sales-banner-section",
+  "settings": [
+    {
+      "type": "select",
+      "id": "section_height",
+      "label": "t:pxu_sections.sections.countdown_timer.section_height.label",
+      "options": [
+        {
+          "value": "adapt",
+          "label": "t:pxu_sections.common.image.adapt"
+        },
+        {
+          "value": "small",
+          "label": "t:pxu_sections.common.image.small"
+        },
+        {
+          "value": "medium",
+          "label": "t:pxu_sections.common.image.medium"
+        },
+        {
+          "value": "large",
+          "label": "t:pxu_sections.common.image.large"
+        }
+      ],
+      "default": "medium"
+    },
+    {
+      "type": "image_picker",
+      "id": "background_image",
+      "label": "t:pxu_sections.common.image.background_image"
+    },
+    {
+      "type": "header",
+      "content":"t:pxu_sections.common.color.color"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "t:pxu_sections.common.color.text_color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "t:pxu_sections.common.color.background_color",
+      "default": "#f8f8f8"
+    },
+    {
+      "type": "color_background",
+      "id": "background_gradient",
+      "label": "t:pxu_sections.common.color.background_color"
+    },
+    {
+      "type": "color",
+      "id": "image_overlay_color",
+      "label": "t:pxu_sections.common.color.image_overlay_color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "image_overlay_opacity",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "%",
+      "label": "t:pxu_sections.sections.countdown_timer.image_overlay_opacity.label",
+      "default": 20
+    },
+    {
+      "type": "header",
+      "content": "t:pxu_sections.common.margin.header"
+    },
+    {
+      "type": "range",
+      "id": "margin_top",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "t:pxu_sections.common.margin.top",
+      "default": 64
+    },
+    {
+      "type": "range",
+      "id": "margin_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "unit": "px",
+      "label": "t:pxu_sections.common.margin.bottom",
+      "default": 64
+    }
+  ],
+  "blocks": [
+    {
+      "type": "highlighted_text",
+      "name": "t:pxu_sections.sections.sales_banner.blocks.highlighted_text.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "richtext",
+          "id": "heading",
+          "label": "t:pxu_sections.common.text.name",
+          "default": "<p>50% <br>OFF</p>"
+        },
+        {
+          "type": "font_picker",
+          "id": "font",
+          "label": "t:pxu_sections.common.typography.font",
+          "default": "cabin_n7"
+        },
+        {
+          "type": "range",
+          "id": "text_size",
+          "min": 64,
+          "max": 160,
+          "step": 1,
+          "unit": "px",
+          "label": "t:pxu_sections.common.text.text_size",
+          "default": 160
+        },
+        {
+          "type": "range",
+          "id": "text_size_mobile",
+          "min": 32,
+          "max": 100,
+          "step": 1,
+          "unit": "px",
+          "label": "t:pxu_sections.common.text.text_size_mobile",
+          "default": 100
+        },
+        {
+          "type": "range",
+          "id": "text_line_height",
+          "min": 0.8,
+          "max": 1.6,
+          "step": 0.1,
+          "label": "t:pxu_sections.common.typography.line_height",
+          "default": 0.9
+        },
+        {
+          "type": "textarea",
+          "id": "solid_highlight_phrases",
+          "label": "t:pxu_sections.sections.sales_banner.blocks.highlighted_text.phrases.solid",
+          "default": "50%",
+          "info": "t:pxu_sections.sections.sales_banner.blocks.highlighted_text.phrases.info"
+        },
+        {
+          "type": "range",
+          "id": "solid_highlight_offset",
+          "min": -20,
+          "max": 20,
+          "step": 1,
+          "unit": "%",
+          "label": "t:pxu_sections.sections.sales_banner.blocks.highlighted_text.solid_highlight_offset",
+          "default": 0
+        },
+        {
+          "type": "textarea",
+          "id": "underline_highlight_phrases",
+          "label": "t:pxu_sections.sections.sales_banner.blocks.highlighted_text.phrases.underline",
+          "info": "t:pxu_sections.sections.sales_banner.blocks.highlighted_text.phrases.info"
+        },
+        {
+          "type": "range",
+          "id": "underline_highlight_offset",
+          "min": -20,
+          "max": 20,
+          "step": 1,
+          "unit": "%",
+          "label": "t:pxu_sections.sections.sales_banner.blocks.highlighted_text.underline_highlight_offset",
+          "default": 0
+        },
+        {
+          "type": "color",
+          "id": "highlight_color",
+          "label": "t:pxu_sections.sections.sales_banner.blocks.highlighted_text.highlight_color",
+          "default": "#F3D32A"
+        }
+      ]
+    },
+    {
+      "type": "content",
+      "name": "t:pxu_sections.common.text.content",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "heading",
+          "label": "t:pxu_sections.common.heading.name",
+          "default": "t:pxu_sections.sections.sales_banner.blocks.content.heading.default"
+        },
+        {
+          "type": "range",
+          "id": "heading_size",
+          "min": 16,
+          "max": 100,
+          "step": 1,
+          "unit": "px",
+          "label": "t:pxu_sections.common.heading.heading_size",
+          "default": 64
+        },
+        {
+          "type": "range",
+          "id": "heading_size_mobile",
+          "min": 16,
+          "max": 60,
+          "step": 1,
+          "unit": "px",
+          "label": "t:pxu_sections.common.heading.heading_size_mobile",
+          "default": 40
+        },
+        {
+          "type": "richtext",
+          "id": "text",
+          "label": "t:pxu_sections.common.text.name",
+          "default": "t:pxu_sections.sections.sales_banner.blocks.content.text.default"
+        },
+        {
+          "type": "range",
+          "id": "text_size",
+          "min": 12,
+          "max": 32,
+          "step": 1,
+          "unit": "px",
+          "label": "t:pxu_sections.common.text.text_size",
+          "default": 18
+        },
+        {
+          "type": "range",
+          "id": "text_size_mobile",
+          "min": 12,
+          "max": 24,
+          "step": 1,
+          "unit": "px",
+          "label": "t:pxu_sections.common.text.text_size_mobile",
+          "default": 16
+        },
+        {
+          "type": "text",
+          "id": "button_label",
+          "label": "t:pxu_sections.common.button.label",
+          "default": "t:pxu_sections.common.button.button"
+        },
+        {
+          "type": "url",
+          "id": "button_url",
+          "label": "t:pxu_sections.common.button.link"
+        },
+        {
+          "type": "select",
+          "id": "button_style",
+          "label": "t:pxu_sections.common.button.style",
+          "options": [
+            {
+              "value": "fill",
+              "label": "t:pxu_sections.common.button.fill"
+            },
+            {
+              "value": "outline",
+              "label": "t:pxu_sections.common.button.outline"
+            }
+          ],
+          "default": "fill"
+        },
+        {
+          "type": "color",
+          "id": "button_background_color",
+          "label": "t:pxu_sections.common.color.background_color",
+          "info": "t:pxu_sections.common.button.background_color_info",
+          "default": "#000000"
+        },
+        {
+          "type": "color",
+          "id": "button_text_color",
+          "label": "t:pxu_sections.common.color.text_color",
+          "default": "#FFFFFF"
+        }
+      ]
+    }
+  ],
+  "disabled_on": {
+    "groups": [
+      "header",
+      "footer"
+    ]
+  },
+  "presets": [
+    {
+      "name": "t:pxu_sections.sections.sales_banner.name",
+      "blocks": [
+        {
+          "type": "highlighted_text"
+        },
+        {
+          "type": "content"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}
