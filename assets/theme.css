@@ -3001,7 +3001,7 @@ table th {
 
 @font-face {
   font-family: "flex-icon";
-  src: url(//jaredjamin.com/cdn/shop/t/162/assets/flex-icon.ttf?v=141001306366886470981750109731) format("truetype"), url(//jaredjamin.com/cdn/shop/t/162/assets/flex-icon.woff?v=65562972783189949211750109732) format("woff"), url(//jaredjamin.com/cdn/shop/t/162/assets/flex-icon.svg?v=122155750794120575381750109731) format("svg");
+  src: url(//jaredjamin.com/cdn/shop/t/164/assets/flex-icon.ttf?v=141001306366886470981751460592) format("truetype"), url(//jaredjamin.com/cdn/shop/t/164/assets/flex-icon.woff?v=65562972783189949211751460592) format("woff"), url(//jaredjamin.com/cdn/shop/t/164/assets/flex-icon.svg?v=122155750794120575381751460592) format("svg");
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -17271,7 +17271,7 @@ ul.faceted-filter-group-display__list {
 }
 .slideshow-classic__banner .placeholder-svg {
   min-height: 400px;
-}
+} 
 
 /* # Testimonial
 ================================================== */
@@ -18520,6 +18520,10 @@ ul.faceted-filter-group-display__list {
 
 /* #FAQ
 ================================================== */
+.product-block--collapsible-row:has(+ :not(.product-block--collapsible-row)) {
+  margin-bottom: 20px;
+}
+
 .page-faq__column-wrap {
   width: 100%;
 }
@@ -18575,14 +18579,19 @@ ul.faceted-filter-group-display__list {
   transition: background-color 0.2s linear;
 }
 .accordion dt .accordion [aria-expanded=true] small,
-.accordion dt .accordion-style--carets[aria-expanded=true] .icon,
+.accordion dt .accordion-style--carets[aria-expanded=true] .caret,
 .faq-accordion dt .accordion [aria-expanded=true] small,
+.faq-accordion dt .accordion-style--carets[aria-expanded=true] .caret,
+.accordion dt .accordion-style--carets[aria-expanded=true] .icon,
 .faq-accordion dt .accordion-style--carets[aria-expanded=true] .icon {
   transform: translateY(-60%) rotate(180deg);
 }
+
 .accordion dt small,
-.accordion dt .icon,
+.accordion dt .caret,
 .faq-accordion dt small,
+.faq-accordion dt .caret,
+.accordion dt .icon,
 .faq-accordion dt .icon {
   position: absolute;
   left: 10px;
@@ -18597,6 +18606,34 @@ ul.faceted-filter-group-display__list {
 .accordion dt .accordion-style--plus_and_minus .icon.icon--active,
 .faq-accordion dt .accordion-style--plus_and_minus .icon.icon--active {
   display: block;
+}
+.accordion dt .plus,
+.faq-accordion dt .plus {
+  position: absolute;
+  left: 10px;
+  bottom: 35%;
+}
+.accordion dt .plus [data-stroke=horizontal],
+.faq-accordion dt .plus [data-stroke=horizontal] {
+  transition: transform 300ms ease;
+  transform-origin: center;
+}
+.accordion dt .plus [data-stroke=vertical],
+.faq-accordion dt .plus [data-stroke=vertical] {
+  transition: transform 300ms ease;
+  transform-origin: center;
+}
+.accordion dt .plus.collapsed [data-stroke=horizontal],
+.faq-accordion dt .plus.collapsed [data-stroke=horizontal] {
+  transition: transform 300ms ease;
+  transform-origin: center;
+  transform: rotate(180deg);
+}
+.accordion dt .plus.collapsed [data-stroke=vertical],
+.faq-accordion dt .plus.collapsed [data-stroke=vertical] {
+  transition: transform 300ms ease;
+  transform-origin: center;
+  transform: rotate(90deg);
 }
 
 .accordion dt a[aria-expanded=true],

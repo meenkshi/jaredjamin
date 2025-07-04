@@ -1,1 +1,11 @@
-{"sections":{"main":{"type":"login-form","settings":{}}},"order":["main"]}
+{
+  "sections": {
+    "main": {
+      "type": "login-form",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

@@ -24,7 +24,16 @@
   <link rel="preconnect" href="https://monorail-edge.shopifysvc.com">
   <link rel="preconnect" href="https://ajax.googleapis.com">
 
+  <!-- Preloads -->
+  <!-- Preload CSS -->
+  <link rel="preload" href="{{ 'fancybox.css' | asset_url }}" as="style">
+  <link rel="preload" href="{{ 'theme.css' | asset_url }}" as="style">
 
+  <!-- Preload JS -->
+  <link rel="preload" href="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js" as="script">
+  <link rel="preload" href="{{ 'vendors.js' | asset_url }}" as="script">
+  <link rel="preload" href="{{ 'utilities.js' | asset_url }}" as="script">
+  <link rel="preload" href="{{ 'app.js' | asset_url }}" as="script">
   {% if settings.show_multiple_currencies or shop.enabled_currencies.size > 1 or localization.available_countries.size > 1 %}
     <link rel="preload" href="/services/javascripts/currencies.js" as="script">
     <link rel="preload" href="{{ 'currencyConversion.js' | asset_url }}" as="script">
@@ -48,12 +57,12 @@
 
   <!-- CSS for Flex -->
   <link rel="stylesheet" href="{{ 'fancybox.css' | asset_url }}">
-  <link rel="stylesheet" href="{{ 'styles.css' | asset_url }}">
+  <link rel="stylesheet" href="{{ 'theme.css' | asset_url }}">
 
   {% comment %}Inject theme-object begin{% endcomment %}
   <script>
     window.PXUTheme = window.PXUTheme || {};
-    window.PXUTheme.version = '5.2.1';
+    window.PXUTheme.version = '5.4.0';
     window.PXUTheme.name = 'Flex';
   </script>
   {% comment %}Inject theme-object end{% endcomment %}
@@ -125,64 +134,12 @@
     <link rel="shortcut icon" type="image/x-icon" href="{{ 'favicon.png' | asset_url }}">
   {%- endif -%}
 
-  {% comment %} remove URLs from asyncLoad {% endcomment %}
-
-  {% assign urls_to_remove = '
-	  https:\/\/www.paypal.com\/tagmanager\/pptm.js?id=50c944b1-936f-11e7-878e-1d4d5fae2a10\u0026shop=jared-jamin-2.myshopify.com,
-      https:\/\/cdn.getcarro.com\/script-tags\/all\/050820094100.js?shop=jared-jamin-2.myshopify.com,
-      https:\/\/geolocation-recommendations.shopifyapps.com\/locale_bar\/script.js?shop=jared-jamin-2.myshopify.com,
-      https:\/\/cdn.shopify.com\/proxy\/9c4a80e2dbbdb7935ae77b21cfc1459cf8d3bc49ba020b58d464dacbb6d8831f\/bingshoppingtool-t2app-prod.trafficmanager.net\/uet\/tracking_script?shop=jared-jamin-2.myshopify.com\u0026sp-cache-control=cHVibGljLCBtYXgtYWdlPTkwMA,
-      https:\/\/geolocation-recommendations.shopifyapps.com\/selectors\/script.js?shop=jared-jamin-2.myshopify.com,
-      https:\/\/widget.ecocart.tools\/ecocart.js?shop_name=jared-jamin-2.myshopify.com\u0026shop=jared-jamin-2.myshopify.com,
-      https:\/\/cdn.shopify.com\/proxy\/7a4a044e8880ae5577d30e822aa3d48b71853e67a0dcff1a1875257235edaa17\/bingshoppingtool-t2app-prod.trafficmanager.net\/api\/ShopifyMT\/v1\/uet\/tracking_script?shop=jared-jamin-2.myshopify.com\u0026sp-cache-control=cHVibGljLCBtYXgtYWdlPTkwMA,
-      https:\/\/cdn2.recomaticapp.com\/assets\/recomatic2-2-599dca53841ef796aa44fbc35a2e920e9433cd532df69399c494574d09353318.js?shop=jared-jamin-2.myshopify.com,
-      https:\/\/cdn.nfcube.com\/instafeed-877a4483a1f3fcfb27468c8271eda4a7.js?shop=jared-jamin-2.myshopify.com,
-      https:\/\/omnisnippet1.com\/inshop\/launcher-v2.js?v=2024-04-24T09,
-      https:\/\/omnisnippet1.com\/inShop\/push-notifications.js?v=2024-04-24T09,
-      https:\/\/omnisnippet1.com\/forms\/main.js?v=2024-04-24T09
-	  '
-	  | strip_newlines
-	  | replace: ' ', ''
-	  | split: ','
-  %}
-
-  {% for url in urls_to_remove %}
-    {% assign content_for_header = content_for_header | remove: url %}
-  {% endfor %}
- <!-- pxu-sections-js start DO NOT EDIT --><script src="{{ 'pxu-sections.js' | asset_url }}" defer></script><!-- DO NOT EDIT pxu-sections-js end-->
-{{ content_for_header }}
-  {% comment %} inject app scripts after user interaction {% endcomment %}
-
-  <script>
-    let scriptUrls = {{ urls_to_remove | json }};
-
-    const injectScripts = (urls) => {
-
-      console.log('injectScripts ran');
-      console.log({ scriptUrls });
-
-      urls.forEach(scriptUrl => {
-
-        console.log('inside forEach');
-
-        const script = document.createElement('script');
-        script.type = 'text/javascript';
-        script.src = scriptUrl.replaceAll('\\/', '/').replaceAll('\\u0026', '&');
-
-        document.head.appendChild(script);
-      });
-
-      scriptUrls.length = 0;
-    }
-
-
-	// Add event listeners for click, scroll, and keydown
-	document.addEventListener('click', () => injectScripts(scriptUrls));
-	window.addEventListener('scroll', () => injectScripts(scriptUrls));
-	document.addEventListener('keydown', () => injectScripts(scriptUrls));
-    
-  </script>
-
+  {%- render 'head.import-map' -%}
+  {%- render 'head.es-module-shims' -%}
+  {%- render 'head.is-land' -%}
+  {%- render 'head.styles' -%}
+  <!-- pxu-sections-js start DO NOT EDIT --><script src="{{ 'pxu-sections.js' | asset_url }}" defer></script><!-- DO NOT EDIT pxu-sections-js end-->
+  {{ content_for_header }}
   {% render 'social-meta-info' %}
   {% if collection.previous_product %}<link rel="prev" href="{{ collection.previous_product }}">{% endif %}
   {% if collection.next_product %}<link rel="next" href="{{ collection.next_product }}">{% endif %}
@@ -344,7 +301,7 @@
   {% render 'mobile-search' %}
 
   {% render 'structured-data' %}
-  <script>(function(n, v) {/* eslint-disable-next-line max-len */if (window.Shopify && window.Shopify.theme && navigator && navigator.sendBeacon && window.Shopify.designMode) {if (sessionStorage.getItem('oots_beacon')) return;navigator.sendBeacon('https://app.outofthesandbox.com/beacon', new URLSearchParams({shop_domain: window.Shopify.shop.toLowerCase(),shop_id: window.BOOMR.shopId,shop_email: '{{ shop.email }}',theme_name: n.toLowerCase(),theme_version: v.toLowerCase(),theme_store_id: window.Shopify.theme.theme_store_id,theme_id: window.Shopify.theme.id,theme_role: window.Shopify.theme.role,}));sessionStorage.setItem('oots_beacon', '');}}('Flex','5.2.1'))</script>
+  <script>(function(n, v) {/* eslint-disable-next-line max-len */if (window.Shopify && window.Shopify.theme && navigator && navigator.sendBeacon && window.Shopify.designMode) {if (sessionStorage.getItem('oots_beacon')) return;navigator.sendBeacon('https://app.outofthesandbox.com/beacon', new URLSearchParams({shop_domain: window.Shopify.shop.toLowerCase(),shop_id: '{{ shop.id }}',shop_email: '{{ shop.email }}',theme_name: n.toLowerCase(),theme_version: v.toLowerCase(),theme_store_id: window.Shopify.theme.theme_store_id,theme_id: window.Shopify.theme.id,theme_role: window.Shopify.theme.role,}));sessionStorage.setItem('oots_beacon', '');}}('Flex','5.4.0'))</script>
 </body>
 </html>
 {% endcapture %}

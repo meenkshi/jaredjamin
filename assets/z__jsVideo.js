@@ -46,6 +46,7 @@ window.PXUTheme.jsVideo = {
       $imageElement.hide();
       $videoTextContainer.hide();
       $videoElement.show();
+      player.play();
     } else {
       // If autoplay disabled, check if poster image added
       if (this.poster) {

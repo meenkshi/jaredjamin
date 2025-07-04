@@ -70,7 +70,7 @@
       </div>
 
       <div
-        class="
+        class="     
           product__information
           has-product-sticker
           one-half
@@ -99,6 +99,12 @@
               {{ block.shopify_attributes }}
             >
               {% case block.type %}
+                {%- when 'collapsible-row' -%}
+                  {%
+                    render 'collapsible-row',
+                    block: block,
+                  %}
+                  
                 {% when 'complementary_products' %}
                   {%
                     render 'complementary-products',
@@ -412,6 +418,7 @@
   }
 </script>
 <script src="{{ 'z__jsProduct.js' | asset_url }}"></script>
+<script src="{{ 'z__jsFAQ.js' | asset_url }}"></script>
 
 {% schema %}
   {
@@ -615,6 +622,24 @@
         "type": "title",
         "name": "Title",
         "limit": 1
+      },
+      {
+        "type": "collapsible-row",
+        "name": "Collapsible row",
+        "settings": [
+          {
+            "type": "text",
+            "id": "question",
+            "label": "Question",
+            "default": "What is your question?"
+          },
+          {
+            "type": "richtext",
+            "id": "answer",
+            "label": "Answer",
+            "default": "<p>Provide the answer to the question here.</p>"
+          },
+        ]
       },
       {
         "type": "vendor",

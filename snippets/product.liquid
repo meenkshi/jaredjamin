@@ -248,6 +248,13 @@
             {% endif %}
           </div>
 
+        {%- elsif block.type == 'collapsible-row' -%}
+          {% comment %} Collapsible row {% endcomment %}
+          {%
+            render 'collapsible-row',
+            block: block,
+          %}
+
         {%- elsif block.type == 'complementary_products' -%}
           {% comment %} Complementary products {% endcomment %}
           {%

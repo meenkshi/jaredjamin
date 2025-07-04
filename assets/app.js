@@ -148,6 +148,10 @@ class VariantSelection extends HTMLElement {
 
 }
 
+const unselectedValue = 'not-selected';
+const unavailableValue = 'unavailable';
+const inputTypeDropdown = 'select';
+const inputTypeRadio = 'radio';
 const valueElementType = {
   select: 'option',
   radio: 'input[type="radio"]'
@@ -167,25 +171,49 @@ function setSelectedOptions(selectOptions, radioOptions, selectedOptions) {
     });
   });
 }
+/*
+ * @param optionsEls [Element list] : Input elements for variant options
+ *
+ */
+
 
 function getOptions(optionsEls) {
   const select = [];
   const radio = [];
 
   for (let i = 0; i < optionsEls.length; i++) {
-    const optionEl = optionsEls[i];
+    const optionEl = optionsEls[i]; // Options within select inputs or radio groups
+
+    const variantOptionIndex = parseInt(optionEl.dataset.variantOptionIndex, 10);
+    const valueMap = {};
     const wrappers = optionEl.matches('[data-variant-option-value-wrapper]') ? [optionEl] : Array.prototype.slice.call(optionEl.querySelectorAll('[data-variant-option-value-wrapper]'));
-    const values = optionEl.matches('[data-variant-option-value]') ? [optionEl] : Array.prototype.slice.call(optionEl.querySelectorAll('[data-variant-option-value]'));
-    if (!values.length) break;
+    const optionValueEls = optionEl.matches('[data-variant-option-value]') ? [optionEl] : Array.prototype.slice.call(optionEl.querySelectorAll('[data-variant-option-value]'));
+    if (!optionValueEls.length) break;
+    let current = unselectedValue;
+    optionValueEls.forEach(el => {
+      valueMap[el.value] = {
+        available: false,
+        accessible: false
+      };
+
+      if (el.hasAttribute('checked') || el.hasAttribute('selected')) {
+        current = el.value;
+      }
+    });
     const option = {
       option: optionEl,
+      variantOptionIndex,
+      current,
       wrappers,
-      values
+      optionValueEls,
+      valueMap
     };
 
-    if (values[0].matches(valueElementType.select)) {
+    if (optionValueEls[0].matches(valueElementType.select)) {
+      option.type = inputTypeDropdown;
       select.push(option);
-    } else if (values[0].matches(valueElementType.radio)) {
+    } else if (optionValueEls[0].matches(valueElementType.radio)) {
+      option.type = inputTypeRadio;
       radio.push(option);
     }
   }
@@ -197,18 +225,18 @@ function getOptions(optionsEls) {
 }
 
 function getSelectedOptions(product, selectOptions, radioOptions) {
-  const options = product.options.map(() => 'not-selected');
+  const options = product.options.map(() => unselectedValue);
   selectOptions.forEach(({
     option
   }) => {
-    if (option.value !== 'not-selected') {
+    if (option.value !== unselectedValue) {
       options[parseInt(option.dataset.variantOptionIndex, 10)] = option.value;
     }
   });
   radioOptions.forEach(({
-    values
+    optionValueEls
   }) => {
-    values.forEach(value => {
+    optionValueEls.forEach(value => {
       if (value.checked) {
         options[parseInt(value.dataset.variantOptionValueIndex, 10)] = value.value;
       }
@@ -227,126 +255,136 @@ function getVariantFromSelectedOptions(variants, selectedOptions) {
   return false;
 }
 
-function _getVariant(variants, options) {
-  return variants.find(variant => variant.options.every((option, index) => option === options[index]));
-}
+function getOptionsAccessibility(variants, option) {
+  const optionValues = Object.keys(option.valueMap);
 
-function _setOptionsMap(product, selectedOptions, optionsMap, option1, option2 = null, option3 = null) {
-  const updatedOptionsMap = { ...optionsMap
-  };
-  const options = [option1, option2, option3].filter(option => !!option);
+  if (optionValues.includes(unselectedValue)) {
+    option.valueMap[unselectedValue].accessible = true;
+  }
 
-  const variant = _getVariant(product.variants, options);
-
-  const variantOptionMatches = options.filter((option, index) => option === selectedOptions[index]).length;
-  const isCurrentVariant = variantOptionMatches === product.options.length;
-  const isNeighbor = variantOptionMatches === product.options.length - 1;
-
-  for (let i = 0; i < options.length; i++) {
-    const option = options[i];
-
-    if (option) {
-      let {
-        setByCurrentVariant,
-        setByNeighbor,
-        accessible,
-        available
-      } = optionsMap[i][option];
-
-      if (variant) {
-        accessible = variant.available || accessible; // The current variant is always
-        // the priority for option availability
-
-        if (isCurrentVariant) {
-          setByCurrentVariant = true;
-          ({
-            available
-          } = variant);
-        } else if (!setByCurrentVariant && isNeighbor) {
-          // If the variant is a neighbor
-          // And the option doesn't belong to the variant
-          // Use its availability information for the option
-          // If multiple neighbors exist, prefer true
-          available = setByNeighbor ? available || variant.available : variant.available;
-          setByNeighbor = true;
+  variants.forEach(variant => {
+    if (variant.available) {
+      variant.options.forEach(variantOption => {
+        if (optionValues.includes(variantOption)) {
+          option.valueMap[variantOption].accessible = true;
         }
-      } else if (isCurrentVariant) {
-        // Catch case where current variant doesn't exist
-        // Ensure availability is false
-        setByCurrentVariant = true;
-        available = false;
-      } else if (!setByCurrentVariant && isNeighbor) {
-        // Catch case where neighbor doesn't exist
-        // Ensure availability is false
-        // If multiple neighbors exist, prefer true
-        available = setByNeighbor ? available : false;
-        setByNeighbor = true;
-      } // If the option isn't set by either
-      // the current variant or a neighbor
-      // default to general accessibility
-
-
-      if (!setByCurrentVariant && !setByNeighbor) {
-        available = accessible;
-      }
-
-      updatedOptionsMap[i][option] = {
-        setByCurrentVariant,
-        setByNeighbor,
-        accessible,
-        available
-      };
-    }
-  }
-
-  return updatedOptionsMap;
-}
-
-function getOptionsAccessibility(product, selectedOptions) {
-  let optionsMap = product.options.map(() => ({}));
-
-  for (let i = 0; i < product.options.length; i++) {
-    for (let j = 0; j < product.variants.length; j++) {
-      const variant = product.variants[j];
-      const option = variant.options[i];
-      optionsMap[i][option] = {
-        setByCurrentVariant: false,
-        setByNeighbor: false,
-        accessible: false,
-        available: false
-      };
-    }
-  }
-
-  const option1Values = optionsMap.length >= 1 ? Object.keys(optionsMap[0]) : [];
-  const option2Values = optionsMap.length >= 2 ? Object.keys(optionsMap[1]) : [];
-  const option3Values = optionsMap.length >= 3 ? Object.keys(optionsMap[2]) : [];
-  option1Values.forEach(option1Value => {
-    option2Values.forEach(option2Value => {
-      option3Values.forEach(option3Value => {
-        optionsMap = _setOptionsMap(product, selectedOptions, optionsMap, option1Value, option2Value, option3Value);
       });
-
-      if (!option3Values.length) {
-        optionsMap = _setOptionsMap(product, selectedOptions, optionsMap, option1Value, option2Value);
-      }
-    });
-
-    if (!option2Values.length) {
-      optionsMap = _setOptionsMap(product, selectedOptions, optionsMap, option1Value);
     }
   });
-  return optionsMap;
+  return option;
+} // Returns whether the variant matches the selection filter prefix.
+// // E.g. ["small", "red", "cotton"] matches ["small", "red"] but not ["small", "green"].
+// // It also matches prefixes like [] and ["*", "red", "*"].
+
+
+function matchesPrefix(variant, prefix) {
+  if (prefix.every((v, i) => v === unselectedValue || variant.options[i] === v)) {
+    // has to match unless it's 'not-selected', 'not-selected' matches everything
+    return variant.available;
+  }
 }
 
-function updateOptions(product, selectOptions, radioOptions, selectedOptions, disableUnavailableOptions, removeUnavailableOptions) {
-  const options = [...selectOptions, ...radioOptions];
+function getVariantFromPartialSelection(variants, selection) {
+  return variants.find(variant => {
+    if (variant.available) {
+      return selection.every((s, i) => s === unselectedValue || variant.options[i] === s);
+    }
+
+    return false;
+  });
+}
+
+function updateOptions(product, selectOptions, radioOptions, selection, disableUnavailableOptions, removeUnavailableOptions, selectFirstAvailable) {
+  let options = [...selectOptions, ...radioOptions];
+  const {
+    variants
+  } = product;
+  let nextAvailableVariant = null;
+  options = options.map(option => getOptionsAccessibility(variants, option));
+  options.sort((a, b) => a.variantOptionIndex - b.variantOptionIndex);
 
   if (options.length === 0) {
     return;
   }
 
-  const optionsAccessibility = getOptionsAccessibility(product, selectedOptions); // Iterate over each option type
+  if (disableUnavailableOptions || removeUnavailableOptions) {
+    // Only do this if we're disabling/hiding unavailable
+    // Ensure the current selection has a match by unsetting options if necessary.
+    // Does the selection match a variant? If not, unselect options starting at the last one
+    while (!variants.some(v => matchesPrefix(v, selection))) {
+      // Find the last set option and unset it.
+      let i = selection.length - 1;
+
+      while (i >= 0 && selection[i] === unselectedValue) {
+        --i;
+      }
+
+      if (i === -1) {
+        break;
+      }
+
+      if (options[i].option.value) {
+        if (!selectFirstAvailable) {
+          options[i].option.value = unselectedValue;
+          options[i].current = unselectedValue;
+        }
+      }
+
+      selection[i] = unselectedValue;
+    }
+  } // Determine which values in each option are selectable given the current selection.
+
+
+  for (let i = 0; i < options.length; ++i) {
+    const values = Object.keys(options[i].valueMap);
+
+    for (let j = 0; j < values.length; ++j) {
+      // input options
+      const prefix = [...selection.slice(0, i), values[j]]; // given the current selection (ie. green/small), do any variants match?
+      // If no variants match, it disables the option value in this iteration
+      // disabling 'dead end' option values
+
+      const selectable = variants.some(v => matchesPrefix(v, prefix));
+      options[i].valueMap[values[j]].available = selectable;
+    }
+  } // If 'select first available variant' is enabled and we have some 'not-selected' values,
+  // we should select options that match a variant
+
+
+  if (selectFirstAvailable && selection.includes(unselectedValue)) {
+    nextAvailableVariant = getVariantFromPartialSelection(variants, selection);
+
+    if (nextAvailableVariant) {
+      selection = nextAvailableVariant.options;
+    }
+
+    options.forEach(optionData => {
+      const currentSelection = selection[optionData.variantOptionIndex];
+      optionData.current = currentSelection;
+
+      if (optionData.type === inputTypeDropdown) {
+        optionData.option.value = currentSelection;
+        optionData.optionValueEls.forEach(e => {
+          e.selected = e.value === currentSelection;
+        });
+      } else {
+        optionData.optionValueEls.forEach(e => {
+          e.checked = e.value === currentSelection;
+        });
+      }
+    });
+  } else if (!selectFirstAvailable && selection.includes(unselectedValue)) {
+    options.forEach(optionData => {
+      // When selectFirstAvailableVariant is false, 
+      // we need to manually set the 'checked' value to false for radio selections
+      // because they don't have a default 'not-selected' option
+      if (selection[optionData.variantOptionIndex] === unselectedValue && optionData.type !== inputTypeDropdown) {
+        optionData.optionValueEls.forEach(e => {
+          e.checked = false;
+        });
+      }
+    });
+  }
 
   for (let i = 0; i < product.options.length; i++) {
     // Corresponding select dropdown, if it exists
@@ -365,39 +403,39 @@ function updateOptions(product, selectOptions, radioOptions, selectedOptions, di
       const {
         option,
         wrappers,
-        values
+        optionValueEls
       } = optionValues;
 
-      for (let j = values.length - 1; j >= 0; j--) {
+      for (let j = optionValueEls.length - 1; j >= 0; j--) {
         const wrapper = wrappers[j];
-        const optionValue = values[j];
+        const optionValue = optionValueEls[j];
         const {
           value
         } = optionValue;
         const {
-          available
-        } = value in optionsAccessibility[i] ? optionsAccessibility[i][value] : false;
-        const {
+          available,
           accessible
-        } = value in optionsAccessibility[i] ? optionsAccessibility[i][value] : false;
-        const isChooseOption = value === 'not-selected'; // Option element to indicate unchosen option
-        // Disable unavailable options
+        } = optionValues.valueMap[value];
 
-        optionValue.disabled = isChooseOption || disableUnavailableOptions && !accessible;
-        optionValue.dataset.variantOptionAccessible = accessible;
-        optionValue.dataset.variantOptionAvailable = available;
+        if (optionValue !== unselectedValue) {
+          optionValue.disabled = disableUnavailableOptions && !available;
+          optionValue.dataset.variantOptionAccessible = accessible;
+          optionValue.dataset.variantOptionAvailable = available;
 
-        if (!removeUnavailableOptions || accessible || isChooseOption) {
-          fragment.insertBefore(wrapper, fragment.firstElementChild);
+          if (!removeUnavailableOptions || accessible) {
+            fragment.insertBefore(wrapper, fragment.firstElementChild);
+          }
         }
       }
 
       option.innerHTML = '';
       option.appendChild(fragment);
-      const chosenValue = values.find(value => value.selected || value.checked);
-      option.dataset.variantOptionChosenValue = chosenValue && chosenValue.value !== 'not-selected' ? chosenValue.value : false;
+      const chosenValue = optionValueEls.find(value => value.selected || value.checked);
+      option.dataset.variantOptionChosenValue = chosenValue && chosenValue.value !== unselectedValue ? chosenValue.value : false;
     }
   }
+
+  return selection;
 }
 
 class OptionsSelection extends HTMLElement {
@@ -426,10 +464,9 @@ class OptionsSelection extends HTMLElement {
     this._events = [];
     this._onChangeFn = this._onOptionChange.bind(this);
     this._optionsEls = this.querySelectorAll('[data-variant-option]');
-    ({
-      select: this._selectOptions,
-      radio: this._radioOptions
-    } = getOptions(this._optionsEls));
+    const options = getOptions(this._optionsEls);
+    this._selectOptions = options.select;
+    this._radioOptions = options.radio;
 
     this._associateVariantSelection(this.getAttribute('variant-selection'));
   }
@@ -448,10 +485,9 @@ class OptionsSelection extends HTMLElement {
 
   connectedCallback() {
     this._optionsEls = this.querySelectorAll('[data-variant-option]');
-    ({
-      select: this._selectOptions,
-      radio: this._radioOptions
-    } = getOptions(this._optionsEls));
+    const options = getOptions(this._optionsEls);
+    this._selectOptions = options.select;
+    this._radioOptions = options.radio;
 
     this._associateVariantSelection(this.getAttribute('variant-selection'));
 
@@ -467,9 +503,9 @@ class OptionsSelection extends HTMLElement {
     });
 
     this._radioOptions.forEach(({
-      values
+      optionValueEls
     }) => {
-      values.forEach(value => {
+      optionValueEls.forEach(value => {
         value.addEventListener('change', this._onChangeFn);
 
         this._events.push({
@@ -502,7 +538,7 @@ class OptionsSelection extends HTMLElement {
 
       case 'disable-unavailable':
       case 'remove-unavailable':
-        this._updateOptions(this.hasAttribute('disable-unavailable'), this.hasAttribute('remove-unavailable'));
+        this._updateOptions(this.hasAttribute('disable-unavailable'), this.hasAttribute('remove-unavailable'), this.hasAttribute('select-first-available'));
 
         break;
     }
@@ -522,7 +558,7 @@ class OptionsSelection extends HTMLElement {
 
   setSelectedOptions(selectedOptions) {
     setSelectedOptions(this._selectOptions, this._radioOptions, selectedOptions);
-    return this._updateOptions(this.hasAttribute('disable-unavailable'), this.hasAttribute('remove-unavailable'), selectedOptions);
+    return this._updateOptions(this.hasAttribute('disable-unavailable'), this.hasAttribute('remove-unavailable'), this.hasAttribute('select-first-available'), selectedOptions);
   }
 
   _associateVariantSelection(id) {
@@ -531,6 +567,8 @@ class OptionsSelection extends HTMLElement {
 
   _updateLabels() {
     // Update any labels
+    const unavailableText = this.getAttribute('data-unavailable-text');
+
     for (let i = 0; i < this._optionsEls.length; i++) {
       const optionsEl = this._optionsEls[i];
       let optionsNameEl = null;
@@ -564,17 +602,32 @@ class OptionsSelection extends HTMLElement {
           optionsNameEl.innerHTML = optionsNameEl.dataset.variantOptionChooseName;
         }
       }
+
+      if (!this.hasAttribute('disable-unavailable')) {
+        const selectOptions = optionsEl.querySelectorAll('option');
+        selectOptions.forEach(option => {
+          let optionLabel = option.innerHTML.replace(`- ${unavailableText}`, '');
+
+          if (option.dataset.variantOptionAvailable === 'false' && option.value !== unselectedValue) {
+            optionLabel = `${optionLabel} - ${unavailableText}`;
+          }
+
+          option.innerHTML = optionLabel;
+        });
+      }
     }
   }
 
   _resetOptions() {
-    return this._updateOptions(false, false);
+    return this._updateOptions(false, false, this.hasAttribute('select-first-available'));
   }
 
-  _updateOptions(disableUnavailableOptions, removeUnavailableOptions, selectedOptions = null) {
+  _updateOptions(disableUnavailableOptions, removeUnavailableOptions, selectFirstAvailable, selectedOptions = null) {
     if (!this._variantSelection) return Promise.resolve(false);
     return this._variantSelection.getProduct().then(product => {
-      updateOptions(product, this._selectOptions, this._radioOptions, selectedOptions || getSelectedOptions(product, this._selectOptions, this._radioOptions), disableUnavailableOptions, removeUnavailableOptions);
+      const updatedSelection = updateOptions(product, this._selectOptions, this._radioOptions, selectedOptions || getSelectedOptions(product, this._selectOptions, this._radioOptions), disableUnavailableOptions, removeUnavailableOptions, selectFirstAvailable); // Use the 'updated' selection in case its changed due to disabled options
+
+      this._updateVariantSelection(product, updatedSelection);
 
       this._updateLabels();
     }).then(() => true);
@@ -583,12 +636,12 @@ class OptionsSelection extends HTMLElement {
   _updateVariantSelection(product, selectedOptions) {
     if (!this._variantSelection) return;
     const variant = getVariantFromSelectedOptions(product.variants, selectedOptions);
-    const isNotSelected = selectedOptions.some(option => option === 'not-selected'); // Update master select
+    const isNotSelected = selectedOptions.some(option => option === unselectedValue); // Update master select
 
     if (variant) {
       this._variantSelection.variant = variant.id;
     } else {
-      this._variantSelection.variant = isNotSelected ? 'not-selected' : 'unavailable';
+      this._variantSelection.variant = isNotSelected ? unselectedValue : unavailableValue;
     }
   }
 
@@ -597,11 +650,9 @@ class OptionsSelection extends HTMLElement {
 
     this._variantSelection.getProduct().then(product => {
       if (!product) return;
-      const selectedOptions = getSelectedOptions(product, this._selectOptions, this._radioOptions);
+      let selectedOptions = getSelectedOptions(product, this._selectOptions, this._radioOptions);
 
-      this._updateOptions(this.hasAttribute('disable-unavailable'), this.hasAttribute('remove-unavailable'), selectedOptions);
-
-      this._updateVariantSelection(product, selectedOptions);
+      this._updateOptions(this.hasAttribute('disable-unavailable'), this.hasAttribute('remove-unavailable'), this.hasAttribute('select-first-available'), selectedOptions);
 
       OptionsSelection.synchronize(this);
     });
@@ -3591,7 +3642,6 @@ $(document)
 
 $(document)
 .on('shopify:section:load', function(e){
-
   // Shopify section as jQuery object
   var $section = $(e.target);
 
@@ -3811,10 +3861,6 @@ $(document)
 
   if($('.jsSlideshowWithText').length > 0) {
     window.PXUTheme.jsSlideshowWithText.blockSelect($parentSection, blockId);
-  }
-
-  if ($('.jsSlideshowClassic').length > 0) {
-    window.PXUTheme.jsSlideshowClassic.blockSelect($parentSection, blockId);
   }
 
   if($('.jsTestimonials').length > 0) {

@@ -66,6 +66,7 @@
       Display variant options for a product
     
       @param product
+      @param select_first_available_variant
       @param selected_variant
       @param variant_selection_id
       @param sold_out_options
@@ -78,6 +79,10 @@
       @param swatches_product_page_size
       @param swatches_custom_colors
     {% endcomment %}
+    
+    {%- if select_first_available_variant == nil -%}
+      {% assign select_first_available_variant = true %}
+    {%- endif -%}
     
     <variant-selection
       {% if variant_selection_id != blank %}id="{{ variant_selection_id }}"{% endif %}
@@ -131,6 +136,7 @@
           Display variant options for a product
         
           @param product
+          @param select_first_available_variant
           @param selected_variant
           @param variant_selection_id
           @param sold_out_options
@@ -150,7 +156,9 @@
           style="display: none;"
           {% if sold_out_options == 'disabled' %}disable-unavailable{% endif %}
           {% if sold_out_options == 'hidden' %}remove-unavailable{% endif %}
+          {% if select_first_available_variant %}select-first-available{% endif %}
           data-options-selection
+          data-unavailable-text="{{ 'product.variants.unavailable' | t }}"
         >
           <script>
             (function() {

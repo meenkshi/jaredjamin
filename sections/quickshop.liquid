@@ -71,6 +71,7 @@
 </section>
 
 <script src="{{ 'z__jsProduct.js' | asset_url }}"></script>
+<script src="{{ 'z__jsFAQ.js' | asset_url }}"></script>
 
 {% comment %} Shopify-XR {% endcomment %}
 {% if product.media %}
@@ -229,6 +230,24 @@
       "type": "title",
       "name": "Title",
       "limit": 1
+    },
+    {
+      "type": "collapsible-row",
+      "name": "Collapsible row",
+      "settings": [
+        {
+          "type": "text",
+          "id": "question",
+          "label": "Question",
+          "default": "What is your question?"
+        },
+        {
+          "type": "richtext",
+          "id": "answer",
+          "label": "Answer",
+          "default": "<p>Provide the answer to the question here.</p>"
+        },
+      ]
     },
     {
       "type": "vendor",
